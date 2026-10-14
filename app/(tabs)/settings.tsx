@@ -1,22 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
-  Modal,
   Pressable,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
   BellRing,
-  CheckCircle2,
   CircleHelp,
   Database,
   FolderLock,
   Globe,
-  KeyRound,
   Languages,
   LockKeyhole,
   LogOut,
@@ -29,7 +24,6 @@ import {
   User,
   Volume2,
   Wrench,
-  X,
 } from 'lucide-react-native';
 import { useApp } from '@/context/AppContext';
 import {
@@ -45,7 +39,6 @@ import {
   StatusPill,
 } from '@/components/ui';
 import { confirmAction } from '@/utils/confirm';
-import { testSupabaseConnection } from '@/lib/supabase';
 
 export default function SettingsScreen() {
   const {
@@ -57,56 +50,10 @@ export default function SettingsScreen() {
     currentUser,
     logoutUser,
     isCloudActive,
-    supabaseUrl,
-    supabaseAnonKey,
-    configureSupabase,
     vaultQRs,
     activeVaultQR,
     permissionState,
   } = useApp();
-
-  const [dbModalOpen, setDbModalOpen] = useState(false);
-  const [inputUrl, setInputUrl] = useState(supabaseUrl);
-  const [inputAnonKey, setInputAnonKey] = useState(supabaseAnonKey);
-  const [testingDb, setTestingDb] = useState(false);
-  const [dbStatusMsg, setDbStatusMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  useEffect(() => {
-    setInputUrl(supabaseUrl);
-    setInputAnonKey(supabaseAnonKey);
-  }, [supabaseUrl, supabaseAnonKey]);
-
-  const handleSaveSupabase = async () => {
-    setDbStatusMsg(null);
-    const cleanUrl = inputUrl.trim();
-    const cleanKey = inputAnonKey.trim();
-
-    if (!cleanUrl && !cleanKey) {
-      await configureSupabase('', '');
-      setDbModalOpen(false);
-      Alert.alert('Local Mode Enabled', 'Cleared Supabase credentials.');
-      return;
-    }
-
-    setTestingDb(true);
-    try {
-      const check = await testSupabaseConnection(cleanUrl, cleanKey);
-      await configureSupabase(cleanUrl, cleanKey);
-      setDbStatusMsg({ ok: check.ok, text: check.message });
-      if (check.ok) {
-        Alert.alert('Supabase Connected', check.message, [
-          { text: 'OK', onPress: () => setDbModalOpen(false) },
-        ]);
-      }
-    } catch (e: any) {
-      setDbStatusMsg({
-        ok: false,
-        text: e?.message || 'Could not verify Supabase connection.',
-      });
-    } finally {
-      setTestingDb(false);
-    }
-  };
 
   const handleClearData = () => {
     confirmAction(
@@ -163,24 +110,20 @@ export default function SettingsScreen() {
               />
               <Divider />
               <SettingRow
-                title="Configure Supabase Database"
+                title="Cloud Ledger Sync"
                 description={
                   isCloudActive
-                    ? `Connected: ${supabaseUrl}`
-                    : 'Set Project URL & Anon Public Key for cloud sync'
+                    ? 'All transactions synced securely to merchant cloud'
+                    : 'Running in offline local storage mode'
                 }
                 icon={Database}
                 right={
                   <StatusPill
-                    label={isCloudActive ? 'CONNECTED' : 'SETUP'}
-                    tone={isCloudActive ? 'success' : 'warning'}
+                    label={isCloudActive ? 'ACTIVE' : 'OFFLINE'}
+                    tone={isCloudActive ? 'success' : 'neutral'}
                     small
                   />
                 }
-                onPress={() => {
-                  setDbStatusMsg(null);
-                  setDbModalOpen(true);
-                }}
               />
               <Divider />
               <SettingRow
@@ -211,24 +154,20 @@ export default function SettingsScreen() {
               />
               <Divider />
               <SettingRow
-                title="Configure Supabase Database"
+                title="Cloud Ledger Sync"
                 description={
                   isCloudActive
-                    ? `Connected: ${supabaseUrl}`
-                    : 'Set Project URL & Anon Public Key for cloud sync'
+                    ? 'Cloud backend ready · Sign in to link store'
+                    : 'Running in offline local storage mode'
                 }
                 icon={Database}
                 right={
                   <StatusPill
-                    label={isCloudActive ? 'CONNECTED' : 'SETUP'}
-                    tone={isCloudActive ? 'success' : 'warning'}
+                    label={isCloudActive ? 'READY' : 'OFFLINE'}
+                    tone={isCloudActive ? 'success' : 'neutral'}
                     small
                   />
                 }
-                onPress={() => {
-                  setDbStatusMsg(null);
-                  setDbModalOpen(true);
-                }}
               />
             </>
           )}
@@ -412,137 +351,7 @@ export default function SettingsScreen() {
         <Text style={{ color: colors.muted, fontSize: 11 }}>DhwaniPay · v1.0.0</Text>
       </View>
 
-      {/* Supabase Configuration Modal */}
-      <Modal
-        visible={dbModalOpen}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => setDbModalOpen(false)}
-      >
-        <Screen>
-          <Header
-            title="Supabase Cloud Setup"
-            subtitle="PostgreSQL Ledger & GoTrue Auth"
-            back={
-              <Pressable onPress={() => setDbModalOpen(false)} hitSlop={10}>
-                <X size={22} color={colors.text} />
-              </Pressable>
-            }
-          />
 
-          <InfoBanner
-            tone="info"
-            icon={Database}
-            title="Connect Your Supabase Project"
-            text="Paste your Supabase Project URL and Anon Public Key below (from Supabase Dashboard > Project Settings > API). Run supabase/schema.sql in your SQL Editor to create the tables."
-          />
-
-          {dbStatusMsg ? (
-            <InfoBanner
-              tone={dbStatusMsg.ok ? 'success' : 'error'}
-              title={dbStatusMsg.ok ? 'Connection Verified' : 'Connection Notice'}
-              text={dbStatusMsg.text}
-            />
-          ) : null}
-
-          <View style={{ gap: 14 }}>
-            <View style={{ gap: 6 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '800',
-                  color: colors.muted,
-                  letterSpacing: 0.6,
-                }}
-              >
-                SUPABASE PROJECT URL
-              </Text>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colors.surface,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  gap: 10,
-                }}
-              >
-                <Globe size={18} color={colors.primary} />
-                <TextInput
-                  value={inputUrl}
-                  onChangeText={setInputUrl}
-                  placeholder="https://your-project-id.supabase.co"
-                  placeholderTextColor={colors.muted}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{ flex: 1, fontSize: 14, fontWeight: '700', color: colors.text }}
-                />
-              </View>
-            </View>
-
-            <View style={{ gap: 6 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '800',
-                  color: colors.muted,
-                  letterSpacing: 0.6,
-                }}
-              >
-                SUPABASE ANON PUBLIC KEY
-              </Text>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colors.surface,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  gap: 10,
-                }}
-              >
-                <KeyRound size={18} color={colors.primary} />
-                <TextInput
-                  value={inputAnonKey}
-                  onChangeText={setInputAnonKey}
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  placeholderTextColor={colors.muted}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{ flex: 1, fontSize: 13, fontWeight: '700', color: colors.text }}
-                />
-              </View>
-            </View>
-
-            {testingDb ? (
-              <View style={{ paddingVertical: 12, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>
-                  Testing connection to Supabase...
-                </Text>
-              </View>
-            ) : (
-              <Button
-                title="Verify & Save Supabase Config"
-                icon={CheckCircle2}
-                onPress={handleSaveSupabase}
-              />
-            )}
-
-            <Button
-              title="Close"
-              variant="secondary"
-              onPress={() => setDbModalOpen(false)}
-            />
-          </View>
-        </Screen>
-      </Modal>
     </Screen>
   );
 }
