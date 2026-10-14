@@ -1,0 +1,6 @@
+{
+  "name": "DhwaniPay",
+  "description": "Smart UPI Soundbox & Payment Tracker for merchants - Real-time payment notifications, regional voice alerts, expense tracking, and dynamic QR standees.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

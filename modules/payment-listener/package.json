@@ -1,0 +1,7 @@
+{
+  "name": "payment-listener",
+  "version": "1.0.0",
+  "description": "Native Android NotificationListenerService bridge for DhwaniPay Soundbox",
+  "main": "index.ts",
+  "types": "index.ts"
+}
